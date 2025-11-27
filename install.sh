@@ -60,6 +60,58 @@ generate_random_string() {
     openssl rand -base64 32
 }
 
+verify_directories() {
+    print_info "Verifying project structure..."
+    
+    if [ ! -d "$BACKEND_DIR" ]; then
+        print_error "Backend directory not found: $BACKEND_DIR"
+        exit 1
+    fi
+    
+    if [ ! -d "$FRONTEND_DIR" ]; then
+        print_error "Frontend directory not found: $FRONTEND_DIR"
+        exit 1
+    fi
+    
+    if [ ! -f "$BACKEND_DIR/package.json" ]; then
+        print_error "Backend package.json not found"
+        exit 1
+    fi
+    
+    if [ ! -f "$FRONTEND_DIR/package.json" ]; then
+        print_error "Frontend package.json not found"
+        exit 1
+    fi
+    
+    print_step "Project structure verified"
+}
+
+cleanup_node_modules() {
+    print_info "Cleaning up node_modules and lock files..."
+    
+    # Clean backend
+    if [ -d "$BACKEND_DIR/node_modules" ]; then
+        print_info "Removing old backend node_modules..."
+        rm -rf "$BACKEND_DIR/node_modules"
+    fi
+    
+    if [ -f "$BACKEND_DIR/package-lock.json" ]; then
+        rm -f "$BACKEND_DIR/package-lock.json"
+    fi
+    
+    # Clean frontend
+    if [ -d "$FRONTEND_DIR/node_modules" ]; then
+        print_info "Removing old frontend node_modules..."
+        rm -rf "$FRONTEND_DIR/node_modules"
+    fi
+    
+    if [ -f "$FRONTEND_DIR/package-lock.json" ]; then
+        rm -f "$FRONTEND_DIR/package-lock.json"
+    fi
+    
+    print_step "Cleanup completed"
+}
+
 ###############################################################################
 # Main Installation Flow
 ###############################################################################
@@ -69,21 +121,32 @@ main() {
     
     echo "Environment: $ENVIRONMENT"
     echo "Project Dir: $PROJECT_DIR"
+    echo "Time: $(date)"
     echo ""
     
-    # Step 1: Check Prerequisites
+    # Step 0: Verify Directories
+    verify_directories
+    
+    # Step 1: Check and Install Prerequisites
     check_prerequisites
     
-    # Step 2: Collect Environment Variables
+    # Step 2: Clean old installations (optional)
+    read -p "Clean old node_modules? (y/n, default: y): " -t 10 CLEAN_OLD
+    CLEAN_OLD=${CLEAN_OLD:-y}
+    if [ "$CLEAN_OLD" = "y" ] || [ "$CLEAN_OLD" = "Y" ]; then
+        cleanup_node_modules
+    fi
+    
+    # Step 3: Collect Environment Variables
     collect_env_variables
     
-    # Step 3: Setup Backend
+    # Step 4: Setup Backend
     setup_backend
     
-    # Step 4: Setup Frontend
+    # Step 5: Setup Frontend
     setup_frontend
     
-    # Step 5: Final Summary
+    # Step 6: Final Summary
     print_summary
 }
 
@@ -94,22 +157,30 @@ main() {
 check_prerequisites() {
     print_header "Checking Prerequisites"
     
-    # Check Node.js
+    # Check and install Node.js
     if check_command node; then
         NODE_VERSION=$(node -v)
         print_step "Node.js installed: $NODE_VERSION"
     else
-        print_error "Node.js 18.x or higher is required"
-        exit 1
+        print_warning "Node.js 18.x not found - attempting to install..."
+        install_nodejs
     fi
     
-    # Check npm
+    # Check and install npm
     if check_command npm; then
         NPM_VERSION=$(npm -v)
         print_step "npm installed: $NPM_VERSION"
     else
-        print_error "npm is required"
-        exit 1
+        print_warning "npm not found - attempting to install..."
+        install_npm
+    fi
+    
+    # Check and install Git
+    if check_command git; then
+        print_step "Git is available"
+    else
+        print_warning "Git not found - attempting to install..."
+        install_git
     fi
     
     # Check MongoDB (only if local development)
@@ -117,18 +188,174 @@ check_prerequisites() {
         if command -v mongod &> /dev/null; then
             print_step "MongoDB is available"
         else
-            print_warning "MongoDB not found locally - ensure it's running before starting the server"
+            print_warning "MongoDB not found - attempting to install..."
+            install_mongodb_local
         fi
     fi
     
-    # Check Git
-    if check_command git; then
-        print_step "Git is available"
+    echo ""
+}
+
+install_nodejs() {
+    print_info "Installing Node.js 18.x..."
+    
+    # Detect OS
+    OS_TYPE=$(uname -s)
+    
+    if [ "$OS_TYPE" = "Darwin" ]; then
+        # macOS
+        if command -v brew &> /dev/null; then
+            print_info "Using Homebrew to install Node.js..."
+            brew install node@18
+            brew link node@18
+        else
+            print_error "Homebrew not found. Please install Node.js manually from https://nodejs.org/"
+            exit 1
+        fi
+    elif [ "$OS_TYPE" = "Linux" ]; then
+        # Linux (Ubuntu/Debian)
+        if command -v apt-get &> /dev/null; then
+            print_info "Using apt to install Node.js..."
+            sudo apt-get update
+            curl -sL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+        elif command -v yum &> /dev/null; then
+            # CentOS/RHEL
+            print_info "Using yum to install Node.js..."
+            curl -sL https://rpm.nodesource.com/setup_18.x | sudo bash -
+            sudo yum install nodejs
+        else
+            print_error "Could not detect package manager. Please install Node.js manually from https://nodejs.org/"
+            exit 1
+        fi
     else
-        print_warning "Git not found - some features may not work"
+        print_error "Unsupported OS. Please install Node.js manually from https://nodejs.org/"
+        exit 1
     fi
     
-    echo ""
+    if check_command node; then
+        NODE_VERSION=$(node -v)
+        print_step "Node.js installed successfully: $NODE_VERSION"
+    else
+        print_error "Failed to install Node.js"
+        exit 1
+    fi
+}
+
+install_npm() {
+    print_info "npm is part of Node.js installation"
+    if check_command node; then
+        npm install -g npm@latest
+        print_step "npm upgraded to latest version"
+    else
+        print_error "Node.js must be installed first"
+        exit 1
+    fi
+}
+
+install_git() {
+    print_info "Installing Git..."
+    
+    # Detect OS
+    OS_TYPE=$(uname -s)
+    
+    if [ "$OS_TYPE" = "Darwin" ]; then
+        # macOS
+        if command -v brew &> /dev/null; then
+            brew install git
+        else
+            print_error "Homebrew not found. Please install Git manually."
+            exit 1
+        fi
+    elif [ "$OS_TYPE" = "Linux" ]; then
+        # Linux (Ubuntu/Debian)
+        if command -v apt-get &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y git
+        elif command -v yum &> /dev/null; then
+            # CentOS/RHEL
+            sudo yum install git
+        else
+            print_error "Could not detect package manager. Please install Git manually."
+            exit 1
+        fi
+    else
+        print_error "Unsupported OS. Please install Git manually."
+        exit 1
+    fi
+    
+    if check_command git; then
+        GIT_VERSION=$(git --version)
+        print_step "Git installed successfully: $GIT_VERSION"
+    else
+        print_error "Failed to install Git"
+        exit 1
+    fi
+}
+
+install_mongodb_local() {
+    print_info "Installing MongoDB locally..."
+    
+    # Detect OS
+    OS_TYPE=$(uname -s)
+    
+    if [ "$OS_TYPE" = "Darwin" ]; then
+        # macOS
+        if command -v brew &> /dev/null; then
+            print_info "Using Homebrew to install MongoDB..."
+            brew install mongodb-community
+            brew services start mongodb-community
+        else
+            print_warning "Homebrew not found. MongoDB must be installed manually."
+            print_info "Download from: https://www.mongodb.com/try/download/community"
+            return
+        fi
+    elif [ "$OS_TYPE" = "Linux" ]; then
+        # Linux (Ubuntu/Debian)
+        if command -v apt-get &> /dev/null; then
+            print_info "Using apt to install MongoDB..."
+            
+            # Add MongoDB repository
+            curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-6.0.gpg
+            echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] http://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+            
+            sudo apt-get update
+            sudo apt-get install -y mongodb-org
+            sudo systemctl start mongod
+            sudo systemctl enable mongod
+        elif command -v yum &> /dev/null; then
+            # CentOS/RHEL
+            print_info "Using yum to install MongoDB..."
+            
+            cat <<EOF | sudo tee /etc/yum.repos.d/mongodb-org-6.0.repo
+[mongodb-org-6.0]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/\$releasever/mongodb-org/6.0/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-6.0.asc
+EOF
+            
+            sudo yum install -y mongodb-org
+            sudo systemctl start mongod
+            sudo systemctl enable mongod
+        else
+            print_warning "Could not detect package manager for MongoDB installation."
+            print_info "Install MongoDB manually from: https://www.mongodb.com/try/download/community"
+            return
+        fi
+    else
+        print_warning "Unsupported OS for automatic MongoDB installation."
+        print_info "Install MongoDB manually from: https://www.mongodb.com/try/download/community"
+        return
+    fi
+    
+    if command -v mongod &> /dev/null; then
+        MONGO_VERSION=$(mongod --version | head -n 1)
+        print_step "MongoDB installed successfully: $MONGO_VERSION"
+    else
+        print_warning "MongoDB installation completed but command not found in PATH"
+    fi
 }
 
 ###############################################################################
@@ -251,6 +478,12 @@ setup_backend() {
     
     cd "$BACKEND_DIR"
     
+    # Verify package.json exists
+    if [ ! -f package.json ]; then
+        print_error "Backend package.json not found in $BACKEND_DIR"
+        exit 1
+    fi
+    
     # Backup existing .env
     if [ -f .env ]; then
         print_info "Backing up existing .env to .env.backup.$TIMESTAMP"
@@ -316,14 +549,38 @@ setup_backend() {
     
     print_step "Created .env file"
     
-    # Install dependencies
-    print_info "Installing backend dependencies..."
-    npm install --legacy-peer-deps 2>&1 | tail -20
-    print_step "Backend dependencies installed"
+    # Install dependencies with retry logic
+    print_info "Installing backend dependencies (this may take a few minutes)..."
+    max_retries=3
+    retry_count=0
+    
+    while [ $retry_count -lt $max_retries ]; do
+        if npm install --legacy-peer-deps; then
+            print_step "Backend dependencies installed successfully"
+            break
+        else
+            retry_count=$((retry_count + 1))
+            if [ $retry_count -lt $max_retries ]; then
+                print_warning "npm install failed, retrying ($retry_count/$max_retries)..."
+                sleep 5
+            else
+                print_error "Failed to install backend dependencies after $max_retries attempts"
+                exit 1
+            fi
+        fi
+    done
     
     # Create uploads directory
     mkdir -p uploads
     print_step "Created uploads directory"
+    
+    # Verify Node modules were installed
+    if [ ! -d node_modules ]; then
+        print_error "node_modules directory not created - installation may have failed"
+        exit 1
+    fi
+    
+    print_step "Backend setup completed"
     
     cd "$PROJECT_DIR"
     echo ""
@@ -338,6 +595,12 @@ setup_frontend() {
     
     cd "$FRONTEND_DIR"
     
+    # Verify package.json exists
+    if [ ! -f package.json ]; then
+        print_error "Frontend package.json not found in $FRONTEND_DIR"
+        exit 1
+    fi
+    
     # Backup existing .env
     if [ -f .env ]; then
         print_info "Backing up existing .env to .env.backup.$TIMESTAMP"
@@ -350,18 +613,65 @@ setup_frontend() {
         echo "# Auto-generated at $(date)"
         echo "# Environment: $ENVIRONMENT"
         echo ""
-        echo "REACT_APP_ENV=${FRONTEND_ENV[REACT_APP_ENV]}"
-        echo "REACT_APP_API_URL=${FRONTEND_ENV[REACT_APP_API_URL]}"
+        echo "# API Configuration"
+        echo "REACT_APP_API_BASE_URL=${FRONTEND_ENV[REACT_APP_API_URL]}"
+        echo "REACT_APP_SOCKET_URL=${FRONTEND_ENV[REACT_APP_API_URL]}"
+        echo ""
+        echo "# Features"
+        echo "REACT_APP_ENABLE_ANALYTICS=true"
+        echo "REACT_APP_ENABLE_DEBUG=$([ "$ENVIRONMENT" = "production" ] && echo "false" || echo "true")"
+        echo ""
+        echo "# Gupshup"
+        echo "REACT_APP_GUPSHUP_APP_ID=${FRONTEND_ENV[REACT_APP_GUPSHUP_APP_ID]:-YOUR_APP_ID}"
+        echo ""
+        echo "# App Info"
+        echo "REACT_APP_VERSION=1.0.0"
+        echo "REACT_APP_NAME=WABA Gupshup"
+        echo "REACT_APP_ENV=$ENVIRONMENT"
         echo "REACT_APP_MAX_FILE_SIZE=5242880"
         echo "REACT_APP_LOG_LEVEL=$([ "$ENVIRONMENT" = "production" ] && echo "info" || echo "debug")"
     } > .env
     
     print_step "Created .env file"
     
-    # Install dependencies
-    print_info "Installing frontend dependencies..."
-    npm install --legacy-peer-deps 2>&1 | tail -20
-    print_step "Frontend dependencies installed"
+    # Install dependencies with retry logic
+    print_info "Installing frontend dependencies (this may take a few minutes)..."
+    max_retries=3
+    retry_count=0
+    
+    while [ $retry_count -lt $max_retries ]; do
+        if npm install --legacy-peer-deps; then
+            print_step "Frontend dependencies installed successfully"
+            break
+        else
+            retry_count=$((retry_count + 1))
+            if [ $retry_count -lt $max_retries ]; then
+                print_warning "npm install failed, retrying ($retry_count/$max_retries)..."
+                sleep 5
+            else
+                print_error "Failed to install frontend dependencies after $max_retries attempts"
+                exit 1
+            fi
+        fi
+    done
+    
+    # Verify Node modules were installed
+    if [ ! -d node_modules ]; then
+        print_error "node_modules directory not created - installation may have failed"
+        exit 1
+    fi
+    
+    # Check if build is required for production
+    if [ "$ENVIRONMENT" = "production" ]; then
+        print_info "Production environment detected - creating optimized build..."
+        if npm run build; then
+            print_step "Frontend build created successfully"
+        else
+            print_warning "Frontend build failed - you may need to run 'npm run build' manually"
+        fi
+    fi
+    
+    print_step "Frontend setup completed"
     
     cd "$PROJECT_DIR"
     echo ""
