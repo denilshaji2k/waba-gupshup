@@ -1,0 +1,44 @@
+{
+  "name": "waba-bsp-server",
+  "version": "1.0.0",
+  "description": "WABA BSP Panel - Gupshup WhatsApp Business API Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build": "echo 'No build needed'",
+    "test": "jest"
+  },
+  "keywords": [
+    "whatsapp",
+    "waba",
+    "gupshup",
+    "bsp",
+    "messaging"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "mongoose": "^7.5.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.1.0",
+    "axios": "^1.5.0",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^9.0.0",
+    "socket.io": "^4.7.1",
+    "express-validator": "^7.0.0",
+    "helmet": "^7.0.0",
+    "morgan": "^1.10.0",
+    "rate-limit": "^1.7.4",
+    "express-rate-limit": "^7.0.0",
+    "nodemailer": "^6.9.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  }
+}
