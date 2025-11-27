@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WABA BSP Platform - Setup Wizard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .progress {
+            height: 100%;
+            background: white;
+            transition: width 0.3s ease;
+        }
+
+        .content {
+            padding: 40px 30px;
+            min-height: 400px;
+        }
+
+        .step {
+            display: none !important;
+        }
+
+        .step.active {
+            display: block !important;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .step-description {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .form-group .required {
+            color: #e74c3c;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .form-group .help-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 6px;
+        }
+
+        .form-group .toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .form-group .generator-btn {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group .generator-btn:hover {
+            background: #e0e0e0;
+            border-color: #999;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .step-indicator {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            margin-top: 20px;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .validation-error {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .summary-box {
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-item .label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .summary-item .value {
+            color: #333;
+            word-break: break-all;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="progress-bar">
+                <div class="progress" id="progressBar"></div>
+            </div>
+            <h1>🚀 WABA BSP Setup</h1>
+            <p>Complete the setup in just a few steps</p>
+        </div>
+
+        <div class="content">
+            <!-- Step 1: Environment -->
+            <div class="step active" id="step-environment">
+                <div class="step-title">Environment Setup</div>
+                <div class="step-description">Choose your deployment environment</div>
+
+                <div class="form-group">
+                    <label>Select Environment <span class="required">*</span></label>
+                    <select id="environment" required>
+                        <option value="">-- Select Environment --</option>
+                        <option value="development">Development</option>
+                        <option value="staging">Staging</option>
+                        <option value="production">Production</option>
+                    </select>
+                </div>
+
+                <div class="info-box">
+                    <strong>💡 Tip:</strong> Development for local testing, Staging for testing on server, Production for live deployment.
+                </div>
+            </div>
+
+            <!-- Step 2: Database -->
+            <div class="step" id="step-database">
+                <div class="step-title">Database Configuration</div>
+                <div class="step-description">Configure MongoDB connection</div>
+
+                <div id="mongodbTypeSelection">
+                    <div class="form-group">
+                        <label>MongoDB Type <span class="required">*</span></label>
+                        <select id="mongodbType" required>
+                            <option value="">-- Select Type --</option>
+                            <option value="local">Local MongoDB</option>
+                            <option value="atlas">MongoDB Atlas (Cloud)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="mongodbLocalForm" style="display: none;">
+                    <div class="form-group">
+                        <label>MongoDB Host <span class="required">*</span></label>
+                        <input type="text" id="mongoHost" placeholder="localhost" value="localhost">
+                        <div class="help-text">Default is localhost for local setup</div>
+                    </div>
+                    <div class="form-group">
+                        <label>MongoDB Port <span class="required">*</span></label>
+                        <input type="number" id="mongoPort" placeholder="27017" value="27017">
+                        <div class="help-text">Default MongoDB port is 27017</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Database Name <span class="required">*</span></label>
+                        <input type="text" id="mongoDatabaseName" placeholder="waba-bsp" value="waba-bsp">
+                    </div>
+                </div>
+
+                <div id="mongodbAtlasForm" style="display: none;">
+                    <div class="form-group">
+                        <label>MongoDB Atlas URI <span class="required">*</span></label>
+                        <textarea id="mongoUri" placeholder="mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority"></textarea>
+                        <div class="help-text">Get this from your MongoDB Atlas dashboard: Cluster → Connect → Driver</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Server Configuration -->
+            <div class="step" id="step-server">
+                <div class="step-title">Server Configuration</div>
+                <div class="step-description">Configure your backend server settings</div>
+
+                <div class="form-group">
+                    <label>Server Port <span class="required">*</span></label>
+                    <input type="number" id="port" placeholder="5000" value="5000" min="1000" max="65535">
+                    <div class="help-text">Port where backend API will run (default: 5000)</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Frontend URL <span class="required">*</span></label>
+                    <input type="text" id="frontendUrl" placeholder="http://localhost:3000">
+                    <div class="help-text">URL of your React frontend (for CORS)</div>
+                </div>
+
+                <div class="form-group">
+                    <label>API Base URL <span class="required">*</span></label>
+                    <input type="text" id="apiUrl" placeholder="http://localhost:5000/api">
+                    <div class="help-text">Base URL for API calls</div>
+                </div>
+            </div>
+
+            <!-- Step 4: Authentication Secrets -->
+            <div class="step" id="step-secrets">
+                <div class="step-title">Security Secrets</div>
+                <div class="step-description">Generate secure keys for authentication</div>
+
+                <div class="form-group">
+                    <label>JWT Secret <span class="required">*</span></label>
+                    <input type="text" id="jwtSecret" readonly>
+                    <button type="button" class="generator-btn" onclick="generateSecret('jwtSecret')">🔄 Generate New Secret</button>
+                    <div class="help-text">Used to sign JWT tokens</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Refresh Token Secret <span class="required">*</span></label>
+                    <input type="text" id="refreshTokenSecret" readonly>
+                    <button type="button" class="generator-btn" onclick="generateSecret('refreshTokenSecret')">🔄 Generate New Secret</button>
+                    <div class="help-text">Used to sign refresh tokens</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Session Secret <span class="required">*</span></label>
+                    <input type="text" id="sessionSecret" readonly>
+                    <button type="button" class="generator-btn" onclick="generateSecret('sessionSecret')">🔄 Generate New Secret</button>
+                    <div class="help-text">Used for session management</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Webhook Token <span class="required">*</span></label>
+                    <input type="text" id="webhookToken" readonly>
+                    <button type="button" class="generator-btn" onclick="generateSecret('webhookToken')">🔄 Generate New Token</button>
+                    <div class="help-text">Used to verify incoming webhooks</div>
+                </div>
+
+                <button type="button" class="btn" style="width: 100%; margin-top: 15px; background: #f0f0f0; color: #333;" onclick="generateAllSecrets()">Generate All Secrets</button>
+            </div>
+
+            <!-- Step 5: Gupshup Integration -->
+            <div class="step" id="step-gupshup">
+                <div class="step-title">Gupshup Integration</div>
+                <div class="step-description">Configure WhatsApp API credentials</div>
+
+                <div class="form-group">
+                    <label>Gupshup API Key <span class="required">*</span></label>
+                    <input type="password" id="gupshupApiKey" placeholder="your-gupshup-api-key">
+                    <div class="help-text">Get this from Gupshup Dashboard → API Settings</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Gupshup App ID <span class="required">*</span></label>
+                    <input type="text" id="gupshupAppId" placeholder="your-gupshup-app-id">
+                    <div class="help-text">Found in Gupshup Dashboard → App Configuration</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Webhook URL <span class="required">*</span></label>
+                    <input type="text" id="webhookUrl" placeholder="https://your-domain.com/api/webhooks/gupshup">
+                    <div class="help-text">Your domain's webhook endpoint (must be HTTPS)</div>
+                </div>
+
+                <div class="info-box">
+                    <strong>📝 Note:</strong> You can update these credentials anytime in your application settings.
+                </div>
+            </div>
+
+            <!-- Step 6: Email Configuration (Optional) -->
+            <div class="step" id="step-email">
+                <div class="step-title">Email Configuration</div>
+                <div class="step-description">Optional: Enable email notifications</div>
+
+                <div class="form-group toggle">
+                    <input type="checkbox" id="enableEmail" class="toggle-checkbox">
+                    <label for="enableEmail">Enable Email Notifications</label>
+                </div>
+
+                <div id="emailFormGroup" style="display: none;">
+                    <div class="form-group">
+                        <label>SMTP Host <span class="required">*</span></label>
+                        <input type="text" id="smtpHost" placeholder="smtp.gmail.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>SMTP Port <span class="required">*</span></label>
+                        <input type="number" id="smtpPort" placeholder="587" value="587">
+                    </div>
+
+                    <div class="form-group">
+                        <label>SMTP Email <span class="required">*</span></label>
+                        <input type="email" id="smtpUser" placeholder="your-email@gmail.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>SMTP Password <span class="required">*</span></label>
+                        <input type="password" id="smtpPass" placeholder="your-app-password">
+                        <div class="help-text">Use App Password for Gmail (not your regular password)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sender Email <span class="required">*</span></label>
+                        <input type="email" id="senderEmail" placeholder="noreply@your-domain.com">
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <strong>💡 Gmail Setup:</strong> Enable 2FA, create App Password, and use that password here.
+                </div>
+            </div>
+
+            <!-- Step 7: Rate Limiting & Analytics -->
+            <div class="step" id="step-advanced">
+                <div class="step-title">Advanced Configuration</div>
+                <div class="step-description">Configure rate limiting and analytics</div>
+
+                <div class="form-group">
+                    <label>Rate Limit Window (ms) <span class="required">*</span></label>
+                    <input type="number" id="rateLimitWindow" placeholder="900000" value="900000">
+                    <div class="help-text">Time window for rate limiting (900000 = 15 minutes)</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Rate Limit Max Requests <span class="required">*</span></label>
+                    <input type="number" id="rateLimitMax" placeholder="1000" value="1000" min="10">
+                    <div class="help-text">Maximum requests per window</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Max File Size (bytes) <span class="required">*</span></label>
+                    <input type="number" id="maxFileSize" placeholder="5242880" value="5242880">
+                    <div class="help-text">Maximum file upload size (5242880 = 5MB)</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Analytics Retention (days) <span class="required">*</span></label>
+                    <input type="number" id="analyticsRetention" placeholder="90" value="90" min="1">
+                    <div class="help-text">How long to keep analytics data</div>
+                </div>
+
+                <div class="form-group toggle">
+                    <input type="checkbox" id="enableAnalytics" class="toggle-checkbox" checked>
+                    <label for="enableAnalytics">Enable Analytics</label>
+                </div>
+            </div>
+
+            <!-- Step 8: Review & Confirm -->
+            <div class="step" id="step-review">
+                <div class="step-title">Review Configuration</div>
+                <div class="step-description">Please review your settings before completing setup</div>
+
+                <div id="reviewSummary" class="summary-box">
+                    <!-- Summary will be populated here -->
+                </div>
+
+                <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107; color: #856404;">
+                    <strong>✅ Ready to Setup!</strong> Click "Complete Setup" to generate your .env files and start the application.
+                </div>
+            </div>
+
+            <!-- Success Step -->
+            <div class="step" id="step-success">
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+                    <div class="step-title">Setup Complete!</div>
+                    <div class="step-description">Your configuration has been saved</div>
+
+                    <div class="success-message" style="margin: 30px 0;">
+                        <strong>Configuration files created:</strong>
+                        <br>✓ server/.env
+                        <br>✓ client/.env
+                        <br><br>
+                        You can now start the application using:
+                        <br><code style="background: #f0f0f0; padding: 5px 10px; border-radius: 3px; display: inline-block; margin-top: 10px;">npm run dev</code>
+                    </div>
+
+                    <div id="envPreview" style="background: #f5f5f5; padding: 15px; border-radius: 6px; text-align: left; font-size: 12px; overflow-y: auto; max-height: 200px; margin: 20px 0;">
+                        <!-- .env content preview -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="buttons" id="navigationButtons">
+                <button type="button" class="btn btn-secondary" id="prevBtn" onclick="changeStep(-1)">← Previous</button>
+                <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">Next →</button>
+            </div>
+
+            <div class="step-indicator">
+                Step <span id="currentStep">1</span> of <span id="totalSteps">8</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration object
+        let config = {
+            environment: '',
+            database: {
+                type: '',
+                mongodb_uri: '',
+                mongodb_host: 'localhost',
+                mongodb_port: 27017,
+                mongodb_database: 'waba-bsp'
+            },
+            server: {
+                port: 5000,
+                frontend_url: 'http://localhost:3000',
+                api_url: 'http://localhost:5000/api'
+            },
+            secrets: {
+                jwt_secret: '',
+                refresh_token_secret: '',
+                session_secret: '',
+                webhook_token: ''
+            },
+            gupshup: {
+                api_key: '',
+                app_id: '',
+                webhook_url: ''
+            },
+            email: {
+                enabled: false,
+                smtp_host: '',
+                smtp_port: 587,
+                smtp_user: '',
+                smtp_pass: '',
+                sender_email: ''
+            },
+            advanced: {
+                rate_limit_window: 900000,
+                rate_limit_max: 1000,
+                max_file_size: 5242880,
+                analytics_retention: 90,
+                enable_analytics: true
+            }
+        };
+
+        const TOTAL_STEPS = 8;
+        let currentStep = 1;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            generateAllSecrets();
+            updateProgress();
+        });
+
+        function setupEventListeners() {
+            // Environment
+            document.getElementById('environment').addEventListener('change', (e) => {
+                config.environment = e.target.value;
+                updateFrontendUrl();
+                updateApiUrl();
+            });
+
+            // Database
+            document.getElementById('mongodbType').addEventListener('change', (e) => {
+                config.database.type = e.target.value;
+                showMongodbForm();
+            });
+
+            document.getElementById('mongoHost').addEventListener('change', (e) => {
+                config.database.mongodb_host = e.target.value;
+            });
+
+            document.getElementById('mongoPort').addEventListener('change', (e) => {
+                config.database.mongodb_port = e.target.value;
+            });
+
+            document.getElementById('mongoDatabaseName').addEventListener('change', (e) => {
+                config.database.mongodb_database = e.target.value;
+            });
+
+            document.getElementById('mongoUri').addEventListener('change', (e) => {
+                config.database.mongodb_uri = e.target.value;
+            });
+
+            // Server
+            document.getElementById('port').addEventListener('change', (e) => {
+                config.server.port = e.target.value;
+                updateApiUrl();
+            });
+
+            document.getElementById('frontendUrl').addEventListener('change', (e) => {
+                config.server.frontend_url = e.target.value;
+            });
+
+            document.getElementById('apiUrl').addEventListener('change', (e) => {
+                config.server.api_url = e.target.value;
+            });
+
+            // Secrets
+            document.getElementById('jwtSecret').addEventListener('change', (e) => {
+                config.secrets.jwt_secret = e.target.value;
+            });
+
+            document.getElementById('refreshTokenSecret').addEventListener('change', (e) => {
+                config.secrets.refresh_token_secret = e.target.value;
+            });
+
+            document.getElementById('sessionSecret').addEventListener('change', (e) => {
+                config.secrets.session_secret = e.target.value;
+            });
+
+            document.getElementById('webhookToken').addEventListener('change', (e) => {
+                config.secrets.webhook_token = e.target.value;
+            });
+
+            // Gupshup
+            document.getElementById('gupshupApiKey').addEventListener('change', (e) => {
+                config.gupshup.api_key = e.target.value;
+            });
+
+            document.getElementById('gupshupAppId').addEventListener('change', (e) => {
+                config.gupshup.app_id = e.target.value;
+            });
+
+            document.getElementById('webhookUrl').addEventListener('change', (e) => {
+                config.gupshup.webhook_url = e.target.value;
+            });
+
+            // Email
+            document.getElementById('enableEmail').addEventListener('change', (e) => {
+                config.email.enabled = e.target.checked;
+                document.getElementById('emailFormGroup').style.display = e.target.checked ? 'block' : 'none';
+            });
+
+            document.getElementById('smtpHost').addEventListener('change', (e) => {
+                config.email.smtp_host = e.target.value;
+            });
+
+            document.getElementById('smtpPort').addEventListener('change', (e) => {
+                config.email.smtp_port = e.target.value;
+            });
+
+            document.getElementById('smtpUser').addEventListener('change', (e) => {
+                config.email.smtp_user = e.target.value;
+            });
+
+            document.getElementById('smtpPass').addEventListener('change', (e) => {
+                config.email.smtp_pass = e.target.value;
+            });
+
+            document.getElementById('senderEmail').addEventListener('change', (e) => {
+                config.email.sender_email = e.target.value;
+            });
+
+            // Advanced
+            document.getElementById('rateLimitWindow').addEventListener('change', (e) => {
+                config.advanced.rate_limit_window = e.target.value;
+            });
+
+            document.getElementById('rateLimitMax').addEventListener('change', (e) => {
+                config.advanced.rate_limit_max = e.target.value;
+            });
+
+            document.getElementById('maxFileSize').addEventListener('change', (e) => {
+                config.advanced.max_file_size = e.target.value;
+            });
+
+            document.getElementById('analyticsRetention').addEventListener('change', (e) => {
+                config.advanced.analytics_retention = e.target.value;
+            });
+
+            document.getElementById('enableAnalytics').addEventListener('change', (e) => {
+                config.advanced.enable_analytics = e.target.checked;
+            });
+        }
+
+        function showMongodbForm() {
+            const type = config.database.type;
+            document.getElementById('mongodbLocalForm').style.display = type === 'local' ? 'block' : 'none';
+            document.getElementById('mongodbAtlasForm').style.display = type === 'atlas' ? 'block' : 'none';
+        }
+
+        function updateFrontendUrl() {
+            if (config.environment === 'production') {
+                document.getElementById('frontendUrl').placeholder = 'https://your-domain.com';
+            } else if (config.environment === 'staging') {
+                document.getElementById('frontendUrl').placeholder = 'https://staging.your-domain.com';
+            } else {
+                document.getElementById('frontendUrl').placeholder = 'http://localhost:3000';
+                document.getElementById('frontendUrl').value = 'http://localhost:3000';
+            }
+        }
+
+        function updateApiUrl() {
+            const port = document.getElementById('port').value;
+            if (config.environment === 'production') {
+                document.getElementById('apiUrl').placeholder = 'https://your-domain.com/api';
+            } else if (config.environment === 'staging') {
+                document.getElementById('apiUrl').placeholder = 'https://staging.your-domain.com/api';
+            } else {
+                document.getElementById('apiUrl').value = `http://localhost:${port}/api`;
+            }
+        }
+
+        function generateSecret(fieldId) {
+            const secret = generateRandomString(32);
+            document.getElementById(fieldId).value = secret;
+            
+            // Update config
+            if (fieldId === 'jwtSecret') config.secrets.jwt_secret = secret;
+            else if (fieldId === 'refreshTokenSecret') config.secrets.refresh_token_secret = secret;
+            else if (fieldId === 'sessionSecret') config.secrets.session_secret = secret;
+            else if (fieldId === 'webhookToken') config.secrets.webhook_token = secret;
+        }
+
+        function generateAllSecrets() {
+            generateSecret('jwtSecret');
+            generateSecret('refreshTokenSecret');
+            generateSecret('sessionSecret');
+            generateSecret('webhookToken');
+        }
+
+        function generateRandomString(length) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function changeStep(direction) {
+            if (!validateCurrentStep()) {
+                return;
+            }
+
+            currentStep += direction;
+
+            if (currentStep < 1) currentStep = 1;
+            if (currentStep > TOTAL_STEPS) currentStep = TOTAL_STEPS;
+
+            showStep(currentStep);
+        }
+
+        function showStep(step) {
+            // Hide all steps
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+
+            // Show current step
+            const stepId = `step-${getStepName(step)}`;
+            const stepElement = document.getElementById(stepId);
+            if (stepElement) {
+                stepElement.classList.add('active');
+            }
+
+            // Update progress
+            updateProgress();
+
+            // Update button visibility
+            updateButtons();
+
+            // Update indicators
+            document.getElementById('currentStep').textContent = step;
+
+            // Scroll to top
+            document.querySelector('.content').scrollTop = 0;
+        }
+
+        function getStepName(step) {
+            const steps = ['environment', 'database', 'server', 'secrets', 'gupshup', 'email', 'advanced', 'review'];
+            return steps[step - 1] || '';
+        }
+
+        function updateProgress() {
+            const progress = (currentStep / TOTAL_STEPS) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function updateButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            prevBtn.style.display = currentStep > 1 ? 'block' : 'none';
+
+            if (currentStep === TOTAL_STEPS) {
+                nextBtn.textContent = 'Complete Setup ✓';
+                nextBtn.onclick = completeSetup;
+            } else {
+                nextBtn.textContent = 'Next →';
+                nextBtn.onclick = () => changeStep(1);
+            }
+        }
+
+        function validateCurrentStep() {
+            switch (currentStep) {
+                case 1:
+                    if (!config.environment) {
+                        alert('Please select an environment');
+                        return false;
+                    }
+                    break;
+                case 2:
+                    if (!config.database.type) {
+                        alert('Please select a MongoDB type');
+                        return false;
+                    }
+                    if (config.database.type === 'local') {
+                        if (!config.database.mongodb_host || !config.database.mongodb_port) {
+                            alert('Please enter MongoDB host and port');
+                            return false;
+                        }
+                    } else if (config.database.type === 'atlas') {
+                        if (!config.database.mongodb_uri) {
+                            alert('Please enter MongoDB Atlas URI');
+                            return false;
+                        }
+                    }
+                    break;
+                case 3:
+                    if (!config.server.port || !config.server.frontend_url) {
+                        alert('Please fill in all server configuration fields');
+                        return false;
+                    }
+                    break;
+                case 4:
+                    if (!config.secrets.jwt_secret || !config.secrets.refresh_token_secret) {
+                        alert('Please generate all secrets');
+                        return false;
+                    }
+                    break;
+                case 5:
+                    if (!config.gupshup.api_key || !config.gupshup.app_id || !config.gupshup.webhook_url) {
+                        alert('Please fill in all Gupshup configuration fields');
+                        return false;
+                    }
+                    break;
+                case 7:
+                    updateReviewSummary();
+                    break;
+            }
+            return true;
+        }
+
+        function updateReviewSummary() {
+            let mongoUri = config.database.mongodb_uri;
+            if (!mongoUri && config.database.type === 'local') {
+                mongoUri = `mongodb://${config.database.mongodb_host}:${config.database.mongodb_port}/${config.database.mongodb_database}`;
+            }
+
+            const summary = `
+                <div class="summary-item">
+                    <span class="label">Environment:</span>
+                    <span class="value">${config.environment}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">MongoDB:</span>
+                    <span class="value">${mongoUri.substring(0, 50)}...</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Server Port:</span>
+                    <span class="value">${config.server.port}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Frontend URL:</span>
+                    <span class="value">${config.server.frontend_url}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Gupshup API Key:</span>
+                    <span class="value">${config.gupshup.api_key.substring(0, 20)}...</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Email Enabled:</span>
+                    <span class="value">${config.email.enabled ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="summary-item">
+                    <span class="label">Analytics:</span>
+                    <span class="value">${config.advanced.enable_analytics ? 'Enabled' : 'Disabled'}</span>
+                </div>
+            `;
+
+            document.getElementById('reviewSummary').innerHTML = summary;
+        }
+
+        function completeSetup() {
+            if (!validateCurrentStep()) return;
+
+            // Build .env content
+            let mongoUri = config.database.mongodb_uri;
+            if (!mongoUri && config.database.type === 'local') {
+                mongoUri = `mongodb://${config.database.mongodb_host}:${config.database.mongodb_port}/${config.database.mongodb_database}`;
+            }
+
+            const backendEnv = generateBackendEnv(mongoUri);
+            const frontendEnv = generateFrontendEnv();
+
+            // Show success and env preview
+            showStep(TOTAL_STEPS + 1);
+            document.getElementById('step-success').classList.add('active');
+            document.getElementById('envPreview').innerHTML = `<strong>.env (Backend):</strong><br><pre>${escapeHtml(backendEnv)}</pre>`;
+
+            // Hide buttons
+            document.getElementById('navigationButtons').style.display = 'none';
+            document.getElementById('stepIndicator').style.display = 'none';
+
+            // Log for debugging
+            console.log('Backend .env:', backendEnv);
+            console.log('Frontend .env:', frontendEnv);
+            console.log('Config:', config);
+
+            // In a real implementation, send this to the backend
+            // For now, we'll show it for manual setup
+            downloadEnvFiles(backendEnv, frontendEnv);
+        }
+
+        function generateBackendEnv(mongoUri) {
+            return `# Auto-generated at ${new Date().toLocaleString()}
+# Environment: ${config.environment}
+
+# Server Configuration
+PORT=${config.server.port}
+NODE_ENV=${config.environment}
+
+# Database
+MONGODB_URI=${mongoUri}
+
+# JWT
+JWT_SECRET=${config.secrets.jwt_secret}
+JWT_EXPIRY=7d
+REFRESH_TOKEN_SECRET=${config.secrets.refresh_token_secret}
+
+# Gupshup
+GUPSHUP_API_KEY=${config.gupshup.api_key}
+GUPSHUP_APP_ID=${config.gupshup.app_id}
+GUPSHUP_API_BASE_URL=https://api.gupshup.io/wa
+
+# Webhook
+WEBHOOK_TOKEN=${config.secrets.webhook_token}
+WEBHOOK_URL=${config.gupshup.webhook_url}
+
+# CORS
+CORS_ORIGIN=${config.server.frontend_url}
+
+# Session
+SESSION_SECRET=${config.secrets.session_secret}
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=${config.advanced.rate_limit_window}
+RATE_LIMIT_MAX_REQUESTS=${config.advanced.rate_limit_max}
+
+# File Upload
+MAX_FILE_SIZE=${config.advanced.max_file_size}
+UPLOAD_DIR=./uploads
+
+# Analytics
+ANALYTICS_RETENTION_DAYS=${config.advanced.analytics_retention}
+ENABLE_ANALYTICS=${config.advanced.enable_analytics}
+${config.email.enabled ? `
+# Email Configuration
+SMTP_HOST=${config.email.smtp_host}
+SMTP_PORT=${config.email.smtp_port}
+SMTP_USER=${config.email.smtp_user}
+SMTP_PASS=${config.email.smtp_pass}
+SENDER_EMAIL=${config.email.sender_email}` : ''}
+`;
+        }
+
+        function generateFrontendEnv() {
+            const logLevel = config.environment === 'production' ? 'info' : 'debug';
+            return `# Auto-generated at ${new Date().toLocaleString()}
+# Environment: ${config.environment}
+
+REACT_APP_ENV=${config.environment}
+REACT_APP_API_URL=${config.server.api_url}
+REACT_APP_MAX_FILE_SIZE=${config.advanced.max_file_size}
+REACT_APP_LOG_LEVEL=${logLevel}
+`;
+        }
+
+        function downloadEnvFiles(backendEnv, frontendEnv) {
+            // Create download links for .env files
+            const backendBlob = new Blob([backendEnv], { type: 'text/plain' });
+            const frontendBlob = new Blob([frontendEnv], { type: 'text/plain' });
+
+            const backendUrl = URL.createObjectURL(backendBlob);
+            const frontendUrl = URL.createObjectURL(frontendBlob);
+
+            // Create download buttons
+            const downloadHtml = `
+                <div style="margin-top: 30px; text-align: center;">
+                    <p><strong>📥 Download Configuration Files:</strong></p>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <a href="${backendUrl}" download="server.env" class="btn btn-primary" style="text-decoration: none;">
+                            📄 Download server/.env
+                        </a>
+                        <a href="${frontendUrl}" download="client.env" class="btn btn-primary" style="text-decoration: none;">
+                            📄 Download client/.env
+                        </a>
+                    </div>
+                    <p style="margin-top: 20px; color: #666; font-size: 12px;">
+                        <strong>Next Steps:</strong><br>
+                        1. Download the .env files above<br>
+                        2. Save server/.env in the server/ directory<br>
+                        3. Save client/.env in the client/ directory<br>
+                        4. Run: <code style="background: #f0f0f0; padding: 2px 6px;">npm run dev</code>
+                    </p>
+                </div>
+            `;
+
+            document.getElementById('envPreview').innerHTML += downloadHtml;
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Initialize
+        showStep(1);
+    </script>
+</body>
+</html>
