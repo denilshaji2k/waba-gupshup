@@ -487,26 +487,94 @@ npm install --legacy-peer-deps
 npm install --force
 ```
 
-### Issue: MongoDB Connection Failed
+## 🔴 MongoDB Installation Errors
+
+### Error: "Unable to correct problems - unmet dependencies (libssl1.1)"
 
 **Symptoms:**
 ```
-Error: connect ECONNREFUSED 127.0.0.1:27017
+The following packages have unmet dependencies:
+ mongodb-org-mongos : Depends: libssl1.1 (>= 1.1.1) but it is not installable
+ mongodb-org-server : Depends: libssl1.1 (>= 1.1.1) but it is not installable
+E: Unable to correct problems, you have held broken packages.
 ```
+
+**Cause:**
+This occurs on Ubuntu 22.04 (Jammy) where `libssl1.1` is not available. MongoDB 6.0 requires OpenSSL 1.1, but Ubuntu 22.04 only has OpenSSL 3.0.
 
 **Solutions:**
 
-1. **Verify MongoDB is Running:**
+#### Solution 1: Use MongoDB 7.0+ (Recommended)
+
+The installer now automatically detects Ubuntu 22.04 and uses MongoDB 7.0 instead, which doesn't require libssl1.1. If you're still seeing this error:
+
 ```bash
-# macOS
-brew services list | grep mongodb
+# Update your installer to the latest version
+git pull origin main
 
-# Ubuntu/Debian
-systemctl status mongod
-
-# CentOS/RHEL
-sudo systemctl status mongod
+# Run installation again
+bash install.sh development
 ```
+
+#### Solution 2: Manual MongoDB Installation on Ubuntu 22.04
+
+```bash
+# Install libssl1.1 compatibility library
+sudo apt-get update
+sudo apt-get install -y libssl1.1
+
+# Then install MongoDB 6.0
+curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-6.0.gpg
+echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] http://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+sudo apt-get update
+sudo apt-get install -y mongodb-org
+sudo systemctl start mongod
+```
+
+#### Solution 3: Skip MongoDB & Use MongoDB Atlas
+
+If MongoDB installation fails, you can continue installation and use MongoDB Atlas (cloud):
+
+```bash
+# 1. Go to https://www.mongodb.com/cloud/atlas
+# 2. Create a free cluster
+# 3. Get your connection string (looks like):
+#    mongodb+srv://username:password@cluster.mongodb.net/database
+
+# 4. Use that connection string in .env:
+cat server/.env | grep MONGODB_URI
+
+# 5. Edit server/.env and update:
+nano server/.env
+# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/waba-bsp
+```
+
+#### Solution 4: Use Docker for MongoDB
+
+```bash
+# Install Docker if you haven't already
+sudo apt-get install -y docker.io
+
+# Start MongoDB in Docker
+docker run -d \
+  --name mongodb \
+  -p 27017:27017 \
+  -v mongodata:/data/db \
+  mongo:latest
+
+# Verify it's running
+docker ps
+# Should show mongodb container running
+
+# Update .env
+# MONGODB_URI=mongodb://localhost:27017/waba-bsp
+# (No changes needed, it connects to the default port)
+```
+
+**Prevention:**
+The latest install.sh automatically detects Ubuntu 22.04 and uses MongoDB 7.0 to avoid this issue.
+
+---
 
 2. **Start MongoDB:**
 ```bash

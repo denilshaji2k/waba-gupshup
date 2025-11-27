@@ -315,14 +315,40 @@ install_mongodb_local() {
         if command -v apt-get &> /dev/null; then
             print_info "Using apt to install MongoDB..."
             
-            # Add MongoDB repository
-            curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-6.0.gpg
-            echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] http://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+            # Detect Ubuntu/Debian version
+            DISTRO=$(lsb_release -si 2>/dev/null | tr '[:upper:]' '[:lower:]')
+            DISTRO_CODENAME=$(lsb_release -sc 2>/dev/null)
+            
+            # For Ubuntu 22.04 (Jammy), use MongoDB 7.0+ which doesn't require libssl1.1
+            # For older versions, use MongoDB 6.0
+            if [ "$DISTRO_CODENAME" = "jammy" ]; then
+                MONGO_VERSION="7.0"
+                UBUNTU_CODENAME="jammy"
+                print_info "Ubuntu 22.04 detected - using MongoDB 7.0..."
+            else
+                MONGO_VERSION="6.0"
+                UBUNTU_CODENAME="focal"
+                print_info "Using MongoDB 6.0..."
+            fi
+            
+            # Add MongoDB repository with appropriate version
+            curl -fsSL https://www.mongodb.org/static/pgp/server-${MONGO_VERSION}.asc | sudo gpg --dearmor -o /usr/share/keyrings/mongodb-server-${MONGO_VERSION}.gpg
+            echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-${MONGO_VERSION}.gpg ] http://repo.mongodb.org/apt/ubuntu ${UBUNTU_CODENAME}/mongodb-org/${MONGO_VERSION} multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-${MONGO_VERSION}.list
             
             sudo apt-get update
-            sudo apt-get install -y mongodb-org
-            sudo systemctl start mongod
-            sudo systemctl enable mongod
+            
+            # Try to install MongoDB, with fallback if dependency issues
+            if ! sudo apt-get install -y mongodb-org; then
+                print_warning "MongoDB installation failed due to dependency issues"
+                print_info "This is often due to missing libssl1.1 on Ubuntu 22.04"
+                print_info "MongoDB can be installed manually or you can continue without it"
+                print_info "For local development without MongoDB, set MONGODB_URI to mongodb://localhost:27017/waba_gupshup"
+                return
+            fi
+            
+            # Start MongoDB service
+            sudo systemctl start mongod || print_warning "Could not start mongod service"
+            sudo systemctl enable mongod || print_warning "Could not enable mongod service"
         elif command -v yum &> /dev/null; then
             # CentOS/RHEL
             print_info "Using yum to install MongoDB..."
@@ -354,7 +380,8 @@ EOF
         MONGO_VERSION=$(mongod --version | head -n 1)
         print_step "MongoDB installed successfully: $MONGO_VERSION"
     else
-        print_warning "MongoDB installation completed but command not found in PATH"
+        print_warning "MongoDB installation did not complete - you may need to install manually"
+        print_info "Continue with installation? Configuration can use MongoDB Atlas or local installation"
     fi
 }
 
