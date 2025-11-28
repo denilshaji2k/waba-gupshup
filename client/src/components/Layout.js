@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, LogOut, Settings, Wallet, Home, MessageSquare, BarChart3, Grid3x3, BookOpen } from 'lucide-react';
+import { Menu, LogOut, Settings, Wallet, Home, MessageSquare, BarChart3, Grid, BookOpen } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
 const Layout = ({ children }) => {
@@ -15,7 +15,7 @@ const Layout = ({ children }) => {
 
   const menuItems = [
     { icon: Home, label: 'Dashboard', href: '/' },
-    { icon: Grid3x3, label: 'Apps', href: '/apps' },
+    { icon: Grid, label: 'Apps', href: '/apps' },
     { icon: BookOpen, label: 'Templates', href: '#' },
     { icon: MessageSquare, label: 'Messages', href: '#' },
     { icon: BarChart3, label: 'Analytics', href: '#' },

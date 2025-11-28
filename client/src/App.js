@@ -16,11 +16,10 @@ import SettingsPage from './pages/SettingsPage';
 import WalletPage from './pages/WalletPage';
 
 // Components
-import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 
 // Store
-import { useAuthStore } from './store/authStore';
+import useAuthStore from './store/authStore';
 
 function App() {
   const { initAuth, isAuthenticated } = useAuthStore();

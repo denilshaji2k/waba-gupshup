@@ -6,7 +6,6 @@ import API from '../services/api';
 const AppsPage = () => {
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     fetchApps();
@@ -28,7 +27,6 @@ const AppsPage = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">My Apps</h1>
         <button
-          onClick={() => setShowModal(true)}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
         >
           <Plus size={20} /> Create App
