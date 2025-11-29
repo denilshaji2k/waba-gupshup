@@ -76,42 +76,62 @@ const TemplatesPage = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Message Templates</h1>
+        <div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Message Templates</h1>
+          <p className="text-gray-500 mt-2">Create and manage WhatsApp message templates</p>
+        </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 shadow-lg"
         >
           <Plus size={20} /> Create Template
         </button>
       </div>
 
       {loading ? (
-        <div className="text-center py-8">Loading...</div>
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="text-gray-500 mt-4">Loading templates...</p>
+        </div>
+      ) : templates.length === 0 ? (
+        <div className="text-center py-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-dashed border-blue-200">
+          <Plus size={48} className="mx-auto text-blue-400 mb-4" />
+          <h3 className="text-xl font-semibold text-gray-800">No templates yet</h3>
+          <p className="text-gray-500 mt-2">Create your first message template to get started</p>
+        </div>
       ) : (
         <div className="grid gap-4">
           {templates.map((template) => (
-            <div key={template._id} className="bg-white p-4 rounded-lg shadow flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="font-semibold">{template.name}</h3>
-                <p className="text-sm text-gray-600">{template.category}</p>
-                <p className="text-sm text-gray-500 mt-2">{template.body.substring(0, 100)}...</p>
-              </div>
-              <div className="flex gap-2">
-                <button className="p-2 text-blue-600 hover:bg-blue-50 rounded">
-                  <Eye size={18} />
-                </button>
-                <button className="p-2 text-green-600 hover:bg-green-50 rounded">
-                  <Edit2 size={18} />
-                </button>
-                <button
-                  onClick={() => handleDelete(template._id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
+            <div key={template._id} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all border border-gray-100 group">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="font-semibold text-lg text-gray-800 group-hover:text-blue-600 transition-colors">{template.name}</h3>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                      {template.category}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 line-clamp-2">{template.body.substring(0, 120)}...</p>
+                  <div className="mt-3 flex gap-2 text-xs text-gray-500">
+                    <span>📧 {template.language}</span>
+                  </div>
+                </div>
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                    <Eye size={18} />
+                  </button>
+                  <button className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                    <Edit2 size={18} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(template._id)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
             </div>
           ))}
         </div>
