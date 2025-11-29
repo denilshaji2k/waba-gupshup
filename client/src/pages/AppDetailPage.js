@@ -10,10 +10,6 @@ export default function AppDetailPage() {
   const [app, setApp] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchAppDetails();
-  }, [appId]);
-
   const fetchAppDetails = async () => {
     try {
       setLoading(true);
@@ -26,6 +22,11 @@ export default function AppDetailPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchAppDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appId]);
 
   if (loading) {
     return (

@@ -23,6 +23,7 @@ export default function JourneyBuilderPage() {
     if (journeyId) {
       fetchJourneyDetails();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appId, journeyId]);
 
   const fetchJourneys = async () => {

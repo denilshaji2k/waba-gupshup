@@ -12,10 +12,6 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState([]);
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, [appId]);
-
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
@@ -46,6 +42,11 @@ export default function AnalyticsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appId]);
 
   const generateMockChartData = () => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
